@@ -1,17 +1,26 @@
 package pl.coderslab;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class TaskManager {
 
     static final String FILE_NAME = "tasks.csv";
-    static final String[] OPTIONS = {"add(1)", "remove(2)", "list(3)", "exit(4)"};
     static String[][] tasks;
+    static final String[] OPTIONS = {
+            ConsoleColors.YELLOW + "add(1)" + ConsoleColors.RESET,
+            ConsoleColors.YELLOW + "remove(2)" + ConsoleColors.RESET,
+            ConsoleColors.YELLOW + "list(3)" + ConsoleColors.RESET,
+            ConsoleColors.YELLOW + "exit(4)" + ConsoleColors.RESET
+    };
 
     public static void main(String[] args) {
 
@@ -29,6 +38,8 @@ public class TaskManager {
                     break;
                 case "remove":
                 case "2":
+                    removeTask(tasks, getTheNumber());
+                    System.out.println("Value was successfully removed");
                     break;
                 case "list":
                 case "3":
@@ -36,6 +47,9 @@ public class TaskManager {
                     break;
                 case "exit":
                 case "4":
+                    saveTabToFile(FILE_NAME, tasks);
+                    System.out.println(ConsoleColors.RED + "The program has ended. Thank you for using it!");
+                    System.exit(500);
                     break;
                 default:
                     System.out.println(ConsoleColors.RED + "Please enter a valid option!" + ConsoleColors.RESET);
@@ -89,21 +103,71 @@ public class TaskManager {
     private static void addTask() {
         // Pobieramy informacje od użytkownika
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Please enter the task description: ");
+        System.out.println(ConsoleColors.YELLOW + "Please enter the task description: " + ConsoleColors.YELLOW);
         String description = scanner.nextLine();
-        System.out.println("Please enter the task due date: ");
+        System.out.println(ConsoleColors.YELLOW + "Please enter the task due date (yyyy-mm-dd): " + ConsoleColors.YELLOW);
         String dueDate = scanner.nextLine();
-        System.out.println("Please enter the task important: true/false: ");
+        System.out.println(ConsoleColors.YELLOW + "Please enter the task important: true/false: " + ConsoleColors.YELLOW);
         String important = scanner.nextLine();
 
         // Zwiększamy tablicę o 1 i uzupełniamy pobranymi danymi
-        tasks = new String[tasks.length + 1][tasks[0].length + 1];
-        tasks[tasks.length - 1] = new String[3];
-        tasks[tasks.length - 1][0] = description;
-        tasks[tasks.length - 1][1] = dueDate;
-        tasks[tasks.length - 1][2] = important;
+        String[][] updatedTasks = new String[tasks.length + 1][3];
+        for (int i = 0; i < tasks.length; i++) {
+            System.arraycopy(tasks[i], 0, updatedTasks[i], 0, tasks[i].length);
+        }
+        updatedTasks[tasks.length][0] = description;
+        updatedTasks[tasks.length][1] = dueDate;
+        updatedTasks[tasks.length][2] = important;
+
+        tasks = updatedTasks;
 
 
+    }
+
+    public static boolean isNumberGreaterEqualZero(String input) {
+        if (NumberUtils.isParsable(input)) {
+            return Integer.parseInt(input) >= 0;
+        }
+        return false;
+    }
+
+    public static int getTheNumber() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please select number to remove.");
+
+        String n = scanner.nextLine();
+        while (!isNumberGreaterEqualZero(n)) {
+            System.out.println("Incorrect argument passed. Please give number greater or equal 0");
+            n = scanner.nextLine();
+        }
+        return Integer.parseInt(n);
+    }
+
+    // sprawdzamy czy podany index nie jest większy niż rozmiar tablicy
+    private static void removeTask(String[][] tab, int index) {
+        try {
+            if (index < tab.length) {
+                tasks = ArrayUtils.remove(tab, index);
+            }
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            System.out.println("Element not exist in tab");
+        }
+    }
+
+
+    public static void saveTabToFile(String fileName, String[][] tab) {
+        Path dir = Paths.get(fileName);
+
+        String[] lines = new String[tasks.length];
+        for (int i = 0; i < tab.length; i++) {
+            lines[i] = String.join(",", tab[i]);
+        }
+
+        try {
+            Files.write(dir, Arrays.asList(lines));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
 }
