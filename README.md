@@ -1,2 +1,2 @@
 # TaskWorkshop
-Console program for managing tasks
+Console program for managing tasks.
